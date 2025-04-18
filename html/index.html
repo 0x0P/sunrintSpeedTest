@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>선린인터넷고등학교 인터넷 속도 측정 시스템</title>
+    <script type="text/javascript" src="speedtest.js"></script>
+    <style>
+      @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Pretendard Variable", Pretendard, -apple-system,
+          BlinkMacSystemFont, system-ui, sans-serif;
+      }
+
+      :root {
+        --background: #ffffff;
+        --foreground: #020817;
+        --card: #ffffff;
+        --card-foreground: #020817;
+        --primary: #213460;
+        --primary-foreground: #f8fafc;
+        --secondary: #f1f5f9;
+        --secondary-foreground: #0f172a;
+        --muted: #f1f5f9;
+        --muted-foreground: #64748b;
+        --border: #e2e8f0;
+        --radius: 0.5rem;
+        --border2: #e2e8f020;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #000;
+          --foreground: #f8fafc;
+          --card: #000000;
+          --card-foreground: #f8fafc;
+          --primary: #f8fafc;
+          --primary-foreground: #0f172a;
+          --secondary: #1e293b;
+          --secondary-foreground: #f8fafc;
+          --muted: #1e293b;
+          --muted-foreground: #94a3b8;
+          --border: #1e293b;
+          --border2: #ffffff10;
+        }
+      }
+
+      body {
+        background-color: var(--background);
+        color: var(--foreground);
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        text-align: center;
+        gap: 1.5rem;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 2.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .card {
+        background-color: var(--card);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        width: 100%;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      #button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 0.875rem;
+        height: 2.5rem;
+        padding: 0 1rem;
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+      }
+
+      #button:hover {
+        opacity: 0.9;
+      }
+
+      #button:focus {
+        outline: none;
+      }
+
+      #button.running {
+        background-color: #ef4444;
+        color: #f8fafc;
+      }
+
+      .results {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        width: 100%;
+      }
+
+      @media (max-width: 640px) {
+        .results {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .result-card {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--card);
+        border-radius: calc(var(--radius) - 2px);
+        border: 1px solid var(--border);
+        padding: 1.25rem;
+        gap: 0.75rem;
+      }
+
+      .result-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--muted-foreground);
+        text-align: left;
+      }
+
+      .result-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .result-unit {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        margin-left: 0.25rem;
+      }
+
+      .canvas-container {
+        width: 100%;
+        height: 120px;
+        position: relative;
+        margin-top: 0.25rem;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        border-radius: calc(var(--radius) - 2px);
+        background-color: var(--secondary);
+      }
+
+      .minor-results {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1.5rem;
+      }
+
+      .minor-result {
+        text-align: center;
+      }
+
+      .minor-result-label {
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        margin-bottom: 0.25rem;
+      }
+
+      .minor-result-value {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .test-in-progress {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        display: none;
+        background-color: var(--secondary);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius);
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+      }
+
+      .result-icon {
+        display: inline-flex;
+        margin-right: 0.5rem;
+        color: var(--muted-foreground);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>선린인터넷고등학교 인터넷 속도 측정 서비스</h1>
+      <button id="button">측정 시작</button>
+
+      <div class="card">
+        <div class="results">
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M12 5v14"></path>
+                  <path d="m19 12-7 7-7-7"></path>
+                </svg>
+              </div>
+              <div class="result-title">다운로드</div>
+            </div>
+            <div>
+              <span id="dlText" class="result-value">-</span>
+              <span class="result-unit">Mbps</span>
+            </div>
+            <div class="canvas-container">
+              <canvas id="dlGraph"></canvas>
+              <div class="test-in-progress" id="dlProgress">측정 중...</div>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M12 19V5"></path>
+                  <path d="m5 12 7-7 7 7"></path>
+                </svg>
+              </div>
+              <div class="result-title">업로드</div>
+            </div>
+            <div>
+              <span id="ulText" class="result-value">-</span>
+              <span class="result-unit">Mbps</span>
+            </div>
+            <div class="canvas-container">
+              <canvas id="ulGraph"></canvas>
+              <div class="test-in-progress" id="ulProgress">측정 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="minor-results">
+          <div class="minor-result">
+            <div class="minor-result-label">Ping</div>
+            <div class="minor-result-value">
+              <span id="pingText">-</span>
+              <span class="result-unit">ms</span>
+            </div>
+          </div>
+
+          <div class="minor-result">
+            <div class="minor-result-label">Jitter</div>
+            <div class="minor-result-value">
+              <span id="jitText">-</span>
+              <span class="result-unit">ms</span>
+            </div>
+          </div>
+
+          <div class="minor-result">
+            <div class="minor-result-label">IP Address</div>
+            <div class="minor-result-value">
+              <span id="ip">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        const dlCanvas = document.getElementById("dlGraph");
+        const ulCanvas = document.getElementById("ulGraph");
+        const dlCtx = dlCanvas.getContext("2d");
+        const ulCtx = ulCanvas.getContext("2d");
+
+        let dlData = [];
+        let ulData = [];
+        let targetDlData = [];
+        let targetUlData = [];
+        let currentDlData = [];
+        let currentUlData = [];
+        let animationFrameId = null;
+        const ANIMATION_SPEED = 0.25;
+        const MAX_POINTS = 50;
+
+        function setupCanvas(canvas) {
+          const dpr = window.devicePixelRatio || 1;
+          const rect = canvas.getBoundingClientRect();
+          canvas.width = rect.width * dpr;
+          canvas.height = rect.height * dpr;
+          const ctx = canvas.getContext("2d");
+          ctx.scale(dpr, dpr);
+          return { width: rect.width, height: rect.height };
+        }
+
+        function drawGrid(ctx, width, height) {
+          const gridColor = getComputedStyle(
+            document.documentElement
+          ).getPropertyValue("--border2");
+
+          ctx.strokeStyle = gridColor;
+          ctx.lineWidth = 1;
+
+          for (let i = 1; i < 5; i++) {
+            const y = (height / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+        }
+
+        function drawGraph(ctx, data, width, height) {
+          if (!data.length) return;
+
+          ctx.clearRect(0, 0, width, height);
+          drawGrid(ctx, width, height);
+
+          const max = Math.max(...data) * 1.2 || 100;
+          const primaryColor =
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "--primary"
+            ) || "#213460";
+
+          ctx.strokeStyle = primaryColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+
+          const pointCount = data.length;
+          ctx.moveTo(0, height - (data[0] / max) * height);
+
+          for (let i = 1; i < pointCount; i++) {
+            const x = (i / (pointCount - 1)) * width;
+            const y = height - (data[i] / max) * height;
+            ctx.lineTo(x, y);
+          }
+
+          ctx.stroke();
+          ctx.lineTo(width, height);
+          ctx.lineTo(0, height);
+          ctx.fillStyle = primaryColor + "20";
+          ctx.fill();
+        }
+
+        function animateGraph() {
+          let needAnimation = false;
+
+          for (let i = 0; i < targetDlData.length; i++) {
+            const diff = targetDlData[i] - (currentDlData[i] || 0);
+            if (Math.abs(diff) > 0.1) {
+              currentDlData[i] =
+                (currentDlData[i] || 0) + diff * ANIMATION_SPEED;
+              needAnimation = true;
+            } else {
+              currentDlData[i] = targetDlData[i];
+            }
+          }
+
+          for (let i = 0; i < targetUlData.length; i++) {
+            const diff = targetUlData[i] - (currentUlData[i] || 0);
+            if (Math.abs(diff) > 0.1) {
+              currentUlData[i] =
+                (currentUlData[i] || 0) + diff * ANIMATION_SPEED;
+              needAnimation = true;
+            } else {
+              currentUlData[i] = targetUlData[i];
+            }
+          }
+
+          const dlSize = setupCanvas(dlCanvas);
+          const ulSize = setupCanvas(ulCanvas);
+
+          drawGraph(dlCtx, currentDlData, dlSize.width, dlSize.height);
+          drawGraph(ulCtx, currentUlData, ulSize.width, ulSize.height);
+
+          animationFrameId = needAnimation
+            ? requestAnimationFrame(animateGraph)
+            : null;
+        }
+
+        function updateGraphData(type, value) {
+          if (type === "dl") {
+            dlData.push(value);
+            if (dlData.length > MAX_POINTS) dlData.shift();
+            targetDlData = [...dlData];
+
+            if (currentDlData.length !== targetDlData.length) {
+              currentDlData = targetDlData.map((v, i) =>
+                currentDlData[i] !== undefined ? currentDlData[i] : v
+              );
+            }
+          } else if (type === "ul") {
+            ulData.push(value);
+            if (ulData.length > MAX_POINTS) ulData.shift();
+            targetUlData = [...ulData];
+
+            if (currentUlData.length !== targetUlData.length) {
+              currentUlData = targetUlData.map((v, i) =>
+                currentUlData[i] !== undefined ? currentUlData[i] : v
+              );
+            }
+          }
+
+          if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(animateGraph);
+          }
+        }
+
+        function formatNumber(num) {
+          num = Number(num);
+          return num < 10
+            ? num.toFixed(2)
+            : num < 100
+            ? num.toFixed(1)
+            : num.toFixed(0);
+        }
+
+        function initSpeedtest() {
+          const speedtest = new Speedtest();
+          speedtest.setParameter("telemetry_level", "basic");
+          let testData = null;
+          let testState = 0;
+
+          function startStop() {
+            const button = document.getElementById("button");
+            const dlProgress = document.getElementById("dlProgress");
+            const ulProgress = document.getElementById("ulProgress");
+
+            if (speedtest.getState() === 3) {
+              speedtest.abort();
+              button.textContent = "측정 시작";
+              button.classList.remove("running");
+              dlProgress.style.display = "none";
+              ulProgress.style.display = "none";
+            } else {
+              button.textContent = "측정 중단";
+              button.classList.add("running");
+
+              dlData = [];
+              ulData = [];
+              targetDlData = [];
+              targetUlData = [];
+              currentDlData = [];
+              currentUlData = [];
+              testState = 0;
+
+              const dlSize = setupCanvas(dlCanvas);
+              const ulSize = setupCanvas(ulCanvas);
+              dlCtx.clearRect(0, 0, dlSize.width, dlSize.height);
+              ulCtx.clearRect(0, 0, ulSize.width, ulSize.height);
+              drawGrid(dlCtx, dlSize.width, dlSize.height);
+              drawGrid(ulCtx, ulSize.width, ulSize.height);
+
+              document.getElementById("dlText").textContent = "-";
+              document.getElementById("ulText").textContent = "-";
+              document.getElementById("pingText").textContent = "-";
+              document.getElementById("jitText").textContent = "-";
+              document.getElementById("ip").textContent = "-";
+
+              speedtest.onupdate = function (data) {
+                testData = data;
+
+                if (testState !== data.testState) {
+                  testState = data.testState;
+
+                  if (testState === 1) {
+                    dlProgress.style.display = "block";
+                    ulProgress.style.display = "none";
+                  } else if (testState === 3) {
+                    dlProgress.style.display = "none";
+                    ulProgress.style.display = "block";
+                  }
+                }
+
+                updateUI(data);
+              };
+
+              speedtest.onend = function (aborted) {
+                button.textContent = "측정 시작";
+                button.classList.remove("running");
+                dlProgress.style.display = "none";
+                ulProgress.style.display = "none";
+                if (testData) updateUI(testData);
+              };
+
+              speedtest.start();
+            }
+          }
+
+          function updateUI(data) {
+            if (!data) return;
+
+            if (data.testState === 1) {
+              const dlSpeed = Number(data.dlStatus) || 0;
+              document.getElementById("dlText").textContent =
+                formatNumber(dlSpeed);
+              updateGraphData("dl", dlSpeed);
+            } else if (data.testState > 1 && data.dlStatus > 0) {
+              document.getElementById("dlText").textContent = formatNumber(
+                data.dlStatus
+              );
+            }
+
+            if (data.testState === 3) {
+              const ulSpeed = Number(data.ulStatus) || 0;
+              document.getElementById("ulText").textContent =
+                formatNumber(ulSpeed);
+              updateGraphData("ul", ulSpeed);
+            } else if (data.testState > 3 && data.ulStatus > 0) {
+              document.getElementById("ulText").textContent = formatNumber(
+                data.ulStatus
+              );
+            }
+
+            if (data.pingStatus > 0) {
+              document.getElementById("pingText").textContent = formatNumber(
+                data.pingStatus
+              );
+            }
+
+            if (data.jitterStatus > 0) {
+              document.getElementById("jitText").textContent = formatNumber(
+                data.jitterStatus
+              );
+            }
+
+            if (data.clientIp) {
+              document.getElementById("ip").textContent = data.clientIp;
+            }
+          }
+
+          document
+            .getElementById("button")
+            .addEventListener("click", startStop);
+
+          window.addEventListener("resize", function () {
+            if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+              animationFrameId = requestAnimationFrame(animateGraph);
+            } else {
+              const dlSize = setupCanvas(dlCanvas);
+              const ulSize = setupCanvas(ulCanvas);
+
+              if (currentDlData.length > 0) {
+                drawGraph(dlCtx, currentDlData, dlSize.width, dlSize.height);
+              } else {
+                dlCtx.clearRect(0, 0, dlSize.width, dlSize.height);
+                drawGrid(dlCtx, dlSize.width, dlSize.height);
+              }
+
+              if (currentUlData.length > 0) {
+                drawGraph(ulCtx, currentUlData, ulSize.width, ulSize.height);
+              } else {
+                ulCtx.clearRect(0, 0, ulSize.width, ulSize.height);
+                drawGrid(ulCtx, ulSize.width, ulSize.height);
+              }
+            }
+          });
+
+          const dlSize = setupCanvas(dlCanvas);
+          const ulSize = setupCanvas(ulCanvas);
+          drawGrid(dlCtx, dlSize.width, dlSize.height);
+          drawGrid(ulCtx, ulSize.width, ulSize.height);
+        }
+
+        window.addEventListener("load", initSpeedtest);
+      </script>
+    </div>
+  </body>
+</html>
